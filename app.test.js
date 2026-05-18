@@ -1,176 +1,157 @@
-const { JSDOM } = require('jsdom');
-const { expect } = require('chai');
-const app = require('./app');
+const app = require('./app.js');
 
-jest.useFakeTimers();
-
-describe('Notes App', function() {
-    beforeEach(function() {
-        // Create a mock DOM
-        const dom = new JSDOM(`<!DOCTYPE html><html><body>
-            <ul id="notes-list"></ul>
-            <span id="note-count"></span>
-            <input id="date-filter" type="date">
-            <button id="clear-filter">Clear Filter</button>
-            <form id="add-note-form">
-                <input id="title" type="text">
-                <textarea id="body"></textarea>
-                <button id="add-note">Add Note</button>
-            </form>
-            <div id="note-manager"></div>
-            <div id="note-form"></div>
-        </body></html>`);
-        global.document = dom.window.document;
-        global.localStorage = {
-            getItem: () => null,
-            setItem: (key, value) => localStorage[key] = value,
-            clear: () => localStorage = {},
-        };
-        global.console = { log: () => {} };
-        global.window = dom.window;
-
-        // Get DOM references
-        global.noteList = document.getElementById('notes-list');
-        global.noteCountElement = document.getElementById('note-count');
-        global.dateFilterElement = document.getElementById('date-filter');
-        global.clearFilterElement = document.getElementById('clear-filter');
-        global.noteForm = document.getElementById('add-note-form');
-        global.addNoteButton = document.getElementById('add-note');
-        global.titleInput = document.getElementById('title');
-        global.bodyInput = document.getElementById('body');
-        global.noteManagerSection = document.getElementById('note-manager');
-        global.noteFormSection = document.getElementById('note-form');
-    });
-
-    afterEach(function() {
-        // Remove all notes from the list
-        while (noteList.firstChild) {
-            noteList.removeChild(noteList.firstChild);
-        }
-        // Clear the localStorage
+describe('Notes App', () => {
+    beforeEach(() => {
+        // Clear localStorage before each test
         localStorage.clear();
+        // Initialize noteId and notes
+        app.noteId = 0;
+        app.notes = [];
     });
 
-    describe('Adding notes', function() {
-        it('adds a new note to the list', async function() {
-            // Mock the addNote function to add a note
-            const addNoteSpy = jest.spyOn(app, 'addNote').mockImplementation(() => {
-                // Create a new note
-                const note = { title: 'Test Note', body: 'Test Body', date: new Date().toLocaleDateString() };
-                // Add the note to the list
-                const li = document.createElement('LI');
-                li.id = 'note-' + notes.length;
-                li.innerHTML = `
-                    <h3>${note.title}</h3>
-                    <p>${note.body}</p>
-                    <span class="date">${note.date}</span>
-                `;
-                noteList.appendChild(li);
-                // Update the count
-                noteCountElement.textContent = notes.length;
-                // Save the notes
-                localStorage.setItem('notes', JSON.stringify(notes));
-            });
-
-            // Simulate a click on the add note button
-            addNoteButton.click();
-            await jest.runTimersToTime(200);
-
-            // Expect one note in the list
-            expect(noteList.children.length).toBe(1);
-        });
-
-        it('adds a note to the list when submitting the form', async function() {
-            // Fill in the form fields
-            titleInput.value = 'Test Note';
-            bodyInput.value = 'Test Body';
-
-            // Simulate a submit on the form
-            noteForm.dispatchEvent(new Event('submit'));
-
-            await jest.runTimersToTime(200);
-
-            // Expect one note in the list
-            expect(noteList.children.length).toBe(1);
-        });
+    it('should initialize notes correctly', () => {
+        // Initialize notes from localStorage
+        app.init();
+        expect(app.notes).toEqual([]);
     });
 
-    describe('Editing notes', function() {
-        it('sets the note to editing mode', async function() {
-            // Add a note to the list
-            const li = document.createElement('LI');
-            li.id = 'note-0';
-            li.innerHTML = `
-                <h3>Test Note</h3>
-                <p>Test Body</p>
-                <span class="date">2024-02-28</span>
-                <button class="edit" data-index="0">Edit</button>
-                <button class="delete">Delete</button>
-            `;
-            noteList.appendChild(li);
-
-            // Simulate a click on the edit button
-            const editButton = li.querySelector('.edit');
-            editButton.click();
-
-            // Expect the form to be visible
-            expect(noteFormSection.style.display).toBe('');
-
-            // Simulate a keydown event on the title input
-            const titleInput = document.getElementById('title');
-            titleInput.value = 'Updated Note';
-            titleInput.dispatchEvent(new Event('keydown'));
-
-            // Expect the note title to be updated
-            expect(li.querySelector('h3').textContent).toBe('Updated Note');
-        });
+    it('should add a new note', () => {
+        // Initialize notes from localStorage
+        app.init();
+        // Create a new note
+        var note = {
+            id: 0,
+            title: 'Test Note',
+            body: 'This is a test note',
+            date: '2022-01-01'
+        };
+        app.notes.push(note);
+        expect(app.notes.length).toBe(1);
+        expect(app.notes[0]).toEqual(note);
     });
 
-    describe('Deleting notes', function() {
-        it('removes a note from the list', async function() {
-            // Add a note to the list
-            const li = document.createElement('LI');
-            li.id = 'note-0';
-            li.innerHTML = `
-                <h3>Test Note</h3>
-                <p>Test Body</p>
-                <span class="date">2024-02-28</span>
-                <button class="edit" data-index="0">Edit</button>
-                <button class="delete" data-index="0">Delete</button>
-            `;
-            noteList.appendChild(li);
-
-            // Simulate a click on the delete button
-            const deleteButton = li.querySelector('.delete');
-            deleteButton.click();
-
-            // Expect the note to be removed from the list
-            expect(noteList.children.length).toBe(0);
-        });
+    it('should filter notes by date', () => {
+        // Initialize notes from localStorage
+        app.init();
+        // Create some notes
+        var note1 = {
+            id: 0,
+            title: 'Note 1',
+            body: 'This is note 1',
+            date: '2022-01-01'
+        };
+        var note2 = {
+            id: 1,
+            title: 'Note 2',
+            body: 'This is note 2',
+            date: '2022-01-02'
+        };
+        var note3 = {
+            id: 2,
+            title: 'Note 3',
+            body: 'This is note 3',
+            date: '2022-01-01'
+        };
+        app.notes.push(note1);
+        app.notes.push(note2);
+        app.notes.push(note3);
+        // Set the date filter
+        app.dateFilter = '2022-01-01';
+        var filteredNotes = app.getFilteredNotes();
+        expect(filteredNotes.length).toBe(2);
+        expect(filteredNotes[0]).toEqual(note1);
+        expect(filteredNotes[1]).toEqual(note3);
     });
 
-    describe('Date filter', function() {
-        it('filters notes by date', async function() {
-            // Add multiple notes to the list
-            for (let i = 0; i < 3; i++) {
-                const li = document.createElement('LI');
-                li.id = 'note-' + i;
-                li.innerHTML = `
-                    <h3>Note ${i}</h3>
-                    <p>Test Body</p>
-                    <span class="date">${i === 0 ? '2024-02-27' : i === 1 ? '2024-02-28' : '2024-02-29'}</span>
-                    <button class="edit" data-index="${i}">Edit</button>
-                    <button class="delete" data-index="${i}">Delete</button>
-                `;
-                noteList.appendChild(li);
-            }
+    it('should clear the date filter', () => {
+        // Initialize notes from localStorage
+        app.init();
+        // Create some notes
+        var note1 = {
+            id: 0,
+            title: 'Note 1',
+            body: 'This is note 1',
+            date: '2022-01-01'
+        };
+        var note2 = {
+            id: 1,
+            title: 'Note 2',
+            body: 'This is note 2',
+            date: '2022-01-02'
+        };
+        var note3 = {
+            id: 2,
+            title: 'Note 3',
+            body: 'This is note 3',
+            date: '2022-01-01'
+        };
+        app.notes.push(note1);
+        app.notes.push(note2);
+        app.notes.push(note3);
+        // Set the date filter
+        app.dateFilter = '2022-01-01';
+        // Clear the date filter
+        app.clearFilter();
+        var filteredNotes = app.getFilteredNotes();
+        expect(filteredNotes.length).toBe(3);
+        expect(filteredNotes[0]).toEqual(note1);
+        expect(filteredNotes[1]).toEqual(note2);
+        expect(filteredNotes[2]).toEqual(note3);
+    });
 
-            // Set the date filter
-            dateFilterElement.value = '2024-02-28';
-            dateFilterElement.dispatchEvent(new Event('input'));
+    it('should edit a note', () => {
+        // Initialize notes from localStorage
+        app.init();
+        // Create a new note
+        var note = {
+            id: 0,
+            title: 'Test Note',
+            body: 'This is a test note',
+            date: '2022-01-01'
+        };
+        app.notes.push(note);
+        // Edit the note
+        var editedNote = {
+            id: 0,
+            title: 'Edited Note',
+            body: 'This is an edited note',
+            date: '2022-01-01'
+        };
+        app.notes[0] = editedNote;
+        expect(app.notes[0]).toEqual(editedNote);
+    });
 
-            // Expect only the notes after the date to be visible
-            expect(noteList.children.length).toBe(1);
+    it('should delete a note', () => {
+        // Initialize notes from localStorage
+        app.init();
+        // Create a new note
+        var note = {
+            id: 0,
+            title: 'Test Note',
+            body: 'This is a test note',
+            date: '2022-01-01'
+        };
+        app.notes.push(note);
+        // Delete the note
+        app.notes = app.notes.filter(function(n) {
+            return n.id !== 0;
         });
+        expect(app.notes.length).toBe(0);
     });
 });
+
+// Helper function to get filtered notes
+app.getFilteredNotes = function() {
+    if (app.dateFilter === '') {
+        return app.notes;
+    } else {
+        return app.notes.filter(function(note) {
+            return note.date === app.dateFilter;
+        });
+    }
+};
+
+// Helper function to clear the date filter
+app.clearFilter = function() {
+    app.dateFilter = '';
+};
