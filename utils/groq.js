@@ -4,19 +4,21 @@ const { httpRequest } = require('./http');
 const logger = require('./logger');
 
 const MAX_RETRIES = 4;
+const MAX_WAIT_MS = 60_000; // never block longer than 60s per retry
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-/**
- * Groq chat completions (OpenAI-compatible API).
- * Default model: llama-3.1-8b-instant (free tier).
- * Automatically retries on 429 rate-limit responses using Retry-After header.
- */
+function retryWaitMs(headers, attempt) {
+  const retryAfter = headers?.['retry-after'];
+  const suggested = retryAfter ? parseInt(retryAfter) * 1000 : Math.min(2 ** attempt * 5000, MAX_WAIT_MS);
+  return Math.min(suggested, MAX_WAIT_MS);
+}
+
 async function groqChat({ model, messages, maxTokens = 4096, systemPrompt = null }) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error('GROQ_API_KEY not set');
 
   const baseUrl = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1';
-  const resolvedModel = model || process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+  const resolvedModel = model || process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
   const body = {
     model: resolvedModel,
@@ -39,22 +41,19 @@ async function groqChat({ model, messages, maxTokens = 4096, systemPrompt = null
       return data.choices[0].message.content;
     } catch (err) {
       if (err.statusCode === 429 && attempt < MAX_RETRIES) {
-        // Respect Retry-After header if present, else exponential backoff
-        const retryAfter = err.response?.headers?.['retry-after'];
-        const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : Math.min(2 ** attempt * 5000, 60000);
-        logger.warn(`Groq rate limited (429) — waiting ${waitMs / 1000}s before retry ${attempt}/${MAX_RETRIES - 1}...`);
+        const waitMs = retryWaitMs(err.response?.headers, attempt);
+        logger.warn(`Groq 429 — waiting ${waitMs / 1000}s (retry ${attempt}/${MAX_RETRIES - 1})...`);
         await sleep(waitMs);
         continue;
+      }
+      if (err.response?.data) {
+        logger.error(`Groq error: ${JSON.stringify(err.response.data)}`);
       }
       throw err;
     }
   }
 }
 
-/**
- * Groq chat completions with tool/function calling support.
- * Returns the full message object so the caller can inspect tool_calls.
- */
 async function groqChatWithTools({ model, messages, tools = [], maxTokens = 4096, systemPrompt = null }) {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error('GROQ_API_KEY not set');
@@ -81,20 +80,16 @@ async function groqChatWithTools({ model, messages, tools = [], maxTokens = 4096
         },
         body,
       });
-      return data.choices[0].message; // full message with possible tool_calls
+      return data.choices[0].message;
     } catch (err) {
       if (err.statusCode === 429 && attempt < MAX_RETRIES) {
-        const retryAfter = err.response?.headers?.['retry-after'];
-        const waitMs = retryAfter ? parseInt(retryAfter) * 1000 : Math.min(2 ** attempt * 5000, 60000);
-        logger.warn(`Groq rate limited (429) — waiting ${waitMs / 1000}s before retry ${attempt}/${MAX_RETRIES - 1}...`);
+        const waitMs = retryWaitMs(err.response?.headers, attempt);
+        logger.warn(`Groq 429 — waiting ${waitMs / 1000}s (retry ${attempt}/${MAX_RETRIES - 1})...`);
         await sleep(waitMs);
         continue;
       }
       if (err.response?.data) {
-        const detail = typeof err.response.data === 'object'
-          ? JSON.stringify(err.response.data)
-          : err.response.data;
-        logger.error(`Groq error body: ${detail}`);
+        logger.error(`Groq error: ${JSON.stringify(err.response.data)}`);
       }
       throw err;
     }
