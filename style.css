@@ -1,0 +1,93 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 1em;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2em;
+}
+
+.filters {
+    margin-bottom: 1em;
+}
+
+#note-list {
+    display: flex;
+    flex-direction: column;
+}
+
+#note-list div {
+    background-color: #fff;
+    padding: 1em;
+    border: 1px solid #ddd;
+    margin-bottom: 1em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#note-list div .edit-button, #note-list div .delete-button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 0.5em 1em;
+    cursor: pointer;
+}
+
+#note-list div .edit-button:hover, #note-list div .delete-button:hover {
+    background-color: #444;
+}
+
+#note-count {
+    margin-top: 1em;
+}
+
+#note-form {
+    margin-bottom: 1em;
+}
+
+#note-form input, #note-form textarea {
+    width: 100%;
+    padding: 0.5em;
+    margin-bottom: 1em;
+    border: 1px solid #ccc;
+}
+
+#note-form button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 0.5em 1em;
+    cursor: pointer;
+}
+
+#note-form button:hover {
+    background-color: #444;
+}
+
+@media (max-width: 375px) {
+    main {
+        width: 90%;
+        margin: 0 auto;
+    }
+    .filters {
+        display: flex;
+        flex-direction: column;
+    }
+    #note-form {
+        width: 100%;
+    }
+}

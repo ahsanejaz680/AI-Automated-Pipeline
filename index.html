@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Notes App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Simple Notes App</h1>
+    </header>
+    <main>
+        <section class="filters">
+            <label for="date-filter">Filter by date:</label>
+            <input type="date" id="date-filter" onchange="filterNotes(this.value)">
+            <button onclick="clearFilter()">Clear filter</button>
+        </section>
+        <section class="notes">
+            <button id="add-note" onclick="addNote()">Add Note</button>
+            <div id="note-form" style="display: none;">
+                <input type="text" id="note-title">
+                <textarea id="note-body"></textarea>
+                <button onclick="saveNote()">Save Note</button>
+            </div>
+            <div id="note-list">
+                <!-- Notes will be appended here -->
+            </div>
+        </section>
+        <div id="note-count">Notes: 0</div>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html>
