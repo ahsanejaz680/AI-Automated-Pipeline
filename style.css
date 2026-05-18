@@ -1,0 +1,99 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+}
+
+#note-form {
+    width: 50%;
+    margin-bottom: 20px;
+}
+
+#note-title {
+    width: 100%;
+    height: 30px;
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+#note-body {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+#add-note-btn {
+    width: 100%;
+    height: 30px;
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#add-note-btn:hover {
+    background-color: #3e8e41;
+}
+
+#note-list {
+    margin-top: 20px;
+}
+
+#note-list div {
+    background-color: #f0f0f0;
+    padding: 20px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+}
+
+#date-filter {
+    width: 30%;
+    height: 30px;
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+#clear-filter-btn {
+    width: 10%;
+    height: 30px;
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#clear-filter-btn:hover {
+    background-color: #3e8e41;
+}
+
+#note-count {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+@media (max-width: 375px) {
+    #note-form {
+        width: 100%;
+    }
+    #note-title {
+        width: 100%;
+    }
+    #note-body {
+        width: 100%;
+    }
+    #add-note-btn {
+        width: 100%;
+    }
+    #date-filter {
+        width: 50%;
+    }
+    #clear-filter-btn {
+        width: 20%;
+    }
+}
