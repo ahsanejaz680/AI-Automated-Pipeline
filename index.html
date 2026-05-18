@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Notes App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Simple Notes App</h1>
+    <form id="note-form">
+        <input type="text" id="title" placeholder="Note title">
+        <textarea id="body" placeholder="Note body"></textarea>
+        <button id="add-note">Add Note</button>
+    </form>
+    <p id="note-count">Notes: <span id="count">0</span></p>
+    <input type="date" id="date-filter" value="none">
+    <button id="clear-filter">Clear Filter</button>
+    <div id="notes-container"></div>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+#note-form {
+    margin-bottom: 20px;
+}
+
+#title, #body {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#add-note {
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#notes-container {
+    margin-bottom: 20px;
+}
+
+.note {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+}
+
+.note h2 {
+    margin-top: 0;
+}
+
+#date-filter {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#clear-filter {
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#note-count {
+    margin-bottom: 10px;
+}
+
+@media only screen and (max-width: 375px) {
+    #note-form {
+        flex-direction: column;
+    }
+}
