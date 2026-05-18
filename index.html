@@ -4,110 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Notes App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        #notes {
-            max-width: 600px;
-            margin: 40px auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .note {
-            padding: 10px;
-            border-bottom: 1px solid #ccc;
-        }
-        .note:last-child {
-            border-bottom: none;
-        }
-        .note-title {
-            font-weight: bold;
-        }
-        .note-body {
-            margin-bottom: 10px;
-        }
-        .note-date {
-            font-size: 14px;
-            color: #666;
-        }
-        .editing {
-            background-color: #fff;
-        }
-        .edit-form {
-            display: none;
-        }
-        .edit-form.show {
-            display: block;
-        }
-        label {
-            display: block;
-            margin-bottom: 10px;
-        }
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #4CAF50;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #3e8e41;
-        }
-        #date-filter {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        #clear-filter {
-            padding: 10px 20px;
-            background-color: #ccc;
-            color: #666;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #clear-filter:hover {
-            background-color: #aaa;
-        }
-        #note-count {
-            margin-bottom: 20px;
-        }
-        @media only screen and (max-width: 375px) {
-            #notes {
-                max-width: 100%;
-                margin: 20px auto;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="notes">
-        <h1>Simple Notes App</h1>
-        <form id="add-note-form">
-            <label for="title">Title:</label>
-            <input type="text" id="title" name="title">
-            <label for="body">Body:</label>
-            <textarea id="body" name="body"></textarea>
-            <button type="submit">Add Note</button>
-        </form>
-        <button id="clear-filter">Clear Filter</button>
-        <input type="date" id="date-filter" value="">
-        <p id="note-count"></p>
-        <div id="notes-list"></div>
-    </div>
+    <h1>Simple Notes App</h1>
+    <form id="note-form">
+        <label for="title">Title:</label>
+        <input type="text" id="title" required>
+        <label for="body">Body:</label>
+        <textarea id="body" required></textarea>
+        <button id="add-note">Add Note</button>
+    </form>
+    <div id="notes-container"></div>
+    <label for="date-filter">Filter by date:</label>
+    <input type="date" id="date-filter" value="">
+    <button id="clear-filter">Clear Filter</button>
+    <p id="note-count"></p>
+
     <script src="app.js"></script>
 </body>
 </html>
