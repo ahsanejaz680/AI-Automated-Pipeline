@@ -4,46 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Notes App</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        
-        .note {
-            margin-bottom: 20px;
-            background-color: #f0f0f0;
-            padding: 10px;
-        }
-        
-        .note-title {
-            font-weight: bold;
-        }
-        
-        .filter-date {
-            margin-bottom: 20px;
-        }
-        
-        #note-count {
-            float: right;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Simple Notes App</h1>
-    <form id="add-note-form">
-        <input type="text" id="note-title" placeholder="Title">
-        <textarea id="note-body" placeholder="Body"></textarea>
-        <button id="add-note-btn">Add Note</button>
-    </form>
-    
-    <div id="note-list"></div>
-    <div class="filter-date">
-        <label for="date-filter">Filter by date:</label>
-        <input type="date" id="date-filter" value="">
-        <button id="clear-filter-btn">Clear filter</button>
-    </div>
-    
+    <header>
+        <h1>Simple Notes App</h1>
+    </header>
+    <main>
+        <section id="note-manager">
+            <h2>Notes</h2>
+            <input type="date" id="date-filter" />
+            <button id="clear-filter">Clear Filter</button>
+            <p id="note-count"></p>
+            <ul id="notes-list"></ul>
+        </section>
+        <section id="note-form">
+            <form id="add-note-form">
+                <label for="title">Title:</label>
+                <input type="text" id="title" autocomplete="off" />
+                <label for="body">Body:</label>
+                <textarea id="body" autocomplete="off"></textarea>
+                <button id="add-note">Add Note</button>
+            </form>
+        </section>
+    </main>
     <script src="app.js"></script>
 </body>
 </html>
