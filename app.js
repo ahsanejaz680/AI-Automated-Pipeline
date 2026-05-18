@@ -1,115 +1,101 @@
-var notes = getNotesFromStorage();
-var dateFilter = '';
+var notes = JSON.parse(localStorage.getItem('notes')) || [];
+var notesElement = document.getElementById('notes');
+var noteCountElement = document.getElementById('note-count');
+var dateFilterElement = document.getElementById('date-filter');
+var clearDateFilterButton = document.getElementById('clear-date-filter');
 
 module.exports = {
     init: function() {
         renderNotes();
-        bindEvents();
+        document.getElementById('add-note').addEventListener('click', addNote);
+        clearDateFilterButton.addEventListener('click', clearDateFilter);
+        dateFilterElement.addEventListener('change', filterNotesByDate);
     }
 };
 
-function getNotesFromStorage() {
-    return JSON.parse(localStorage.getItem('notes')) || [];
-}
-
-function saveNotesToStorage() {
+function addNote(event) {
+    event.preventDefault();
+    var title = document.getElementById('title').value;
+    var body = document.getElementById('body').value;
+    var note = {
+        title: title,
+        body: body,
+        date: new Date().toISOString().split('T')[0]
+    };
+    notes.push(note);
     localStorage.setItem('notes', JSON.stringify(notes));
+    renderNotes();
+    document.getElementById('title').value = '';
+    document.getElementById('body').value = '';
 }
 
 function renderNotes() {
-    var notesHtml = '';
-    var filteredNotes = filterNotesByDate(dateFilter);
-    var noteCount = filteredNotes.length;
-
+    notesElement.innerHTML = '';
+    var filteredNotes = filterNotesByCurrentFilter();
     filteredNotes.forEach(function(note, index) {
-        notesHtml += `
-            <div class="note">
-                <h2>${note.title}</h2>
-                <p>${note.body}</p>
-                <p>Created on: ${note.date}</p>
-                <button class="edit-note" data-index="${index}">Edit</button>
-                <button class="delete-note" data-index="${index}">Delete</button>
-            </div>
+        var noteElement = document.createElement('div');
+        noteElement.className = 'note';
+        noteElement.innerHTML = `
+            <h2>${note.title}</h2>
+            <p>${note.body}</p>
+            <p>Created on: ${note.date}</p>
+            <button class="edit-note">Edit</button>
+            <button class="delete-note">Delete</button>
         `;
+        noteElement.querySelector('.edit-note').addEventListener('click', function() {
+            editNote(index, noteElement);
+        });
+        noteElement.querySelector('.delete-note').addEventListener('click', function() {
+            deleteNote(index);
+        });
+        notesElement.appendChild(noteElement);
     });
-
-    document.getElementById('notes-container').innerHTML = notesHtml;
-    document.getElementById('note-count').textContent = `Showing ${noteCount} notes`;
+    noteCountElement.textContent = `${filteredNotes.length} notes`;
 }
 
-function filterNotesByDate(date) {
-    if (date === '') {
-        return notes;
-    } else {
-        return notes.filter(function(note) {
-            return note.date === date;
-        });
+function editNote(index, noteElement) {
+    var titleInput = document.createElement('input');
+    titleInput.value = notes[index].title;
+    var bodyTextarea = document.createElement('textarea');
+    bodyTextarea.value = notes[index].body;
+    noteElement.innerHTML = `
+        <h2>${titleInput.outerHTML}</h2>
+        <p>${bodyTextarea.outerHTML}</p>
+        <button class="save-note">Save</button>
+    `;
+    noteElement.querySelector('.save-note').addEventListener('click', function() {
+        notes[index].title = titleInput.value;
+        notes[index].body = bodyTextarea.value;
+        localStorage.setItem('notes', JSON.stringify(notes));
+        renderNotes();
+    });
+}
+
+function deleteNote(index) {
+    if (confirm('Are you sure you want to delete this note?')) {
+        notes.splice(index, 1);
+        localStorage.setItem('notes', JSON.stringify(notes));
+        renderNotes();
     }
 }
 
-function bindEvents() {
-    document.getElementById('add-note').addEventListener('click', function(event) {
-        event.preventDefault();
-        var title = document.getElementById('title').value;
-        var body = document.getElementById('body').value;
-        var currentDate = new Date().toISOString().slice(0, 10);
-        notes.push({ title: title, body: body, date: currentDate });
-        saveNotesToStorage();
-        renderNotes();
-        document.getElementById('title').value = '';
-        document.getElementById('body').value = '';
-    });
+function clearDateFilter() {
+    dateFilterElement.value = '';
+    renderNotes();
+}
 
-    document.getElementById('notes-container').addEventListener('click', function(event) {
-        if (event.target.classList.contains('edit-note')) {
-            var index = event.target.dataset.index;
-            var note = notes[index];
-            var titleInput = document.createElement('input');
-            var bodyInput = document.createElement('textarea');
-            titleInput.value = note.title;
-            bodyInput.value = note.body;
-            titleInput.classList.add('edit-input');
-            bodyInput.classList.add('edit-input');
-            var editContainer = event.target.parentNode;
-            editContainer.innerHTML = '';
-            editContainer.appendChild(titleInput);
-            editContainer.appendChild(bodyInput);
-            var saveButton = document.createElement('button');
-            saveButton.textContent = 'Save';
-            saveButton.classList.add('save-note');
-            saveButton.dataset.index = index;
-            editContainer.appendChild(saveButton);
-        }
+function filterNotesByDate() {
+    renderNotes();
+}
 
-        if (event.target.classList.contains('delete-note')) {
-            var index = event.target.dataset.index;
-            if (confirm('Are you sure you want to delete this note?')) {
-                notes.splice(index, 1);
-                saveNotesToStorage();
-                renderNotes();
-            }
-        }
-
-        if (event.target.classList.contains('save-note')) {
-            var index = event.target.dataset.index;
-            var titleInput = event.target.parentNode.querySelector('.edit-input:first-child');
-            var bodyInput = event.target.parentNode.querySelector('.edit-input:last-child');
-            notes[index].title = titleInput.value;
-            notes[index].body = bodyInput.value;
-            saveNotesToStorage();
-            renderNotes();
-        }
-    });
-
-    document.getElementById('date-filter').addEventListener('change', function() {
-        dateFilter = this.value;
-        renderNotes();
-    });
-
-    document.getElementById('clear-filter').addEventListener('click', function() {
-        dateFilter = '';
-        renderNotes();
-    });
+function filterNotesByCurrentFilter() {
+    var filteredNotes = notes.slice();
+    if (dateFilterElement.value !== '') {
+        filteredNotes = filteredNotes.filter(function(note) {
+            return note.date === dateFilterElement.value;
+        });
+    }
+    return filteredNotes;
 }
 
 module.exports.init();
