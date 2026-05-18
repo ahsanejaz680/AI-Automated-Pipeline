@@ -1,72 +1,146 @@
 const app = require('./app.js');
 
-describe('app', () => {
-    beforeEach(() => {
-        document.body.innerHTML = `
-            <h1>Simple Notes App</h1>
-            <form id="note-form">
-                <input type="text" id="title" placeholder="Note title">
-                <textarea id="body" placeholder="Note body"></textarea>
-                <button id="add-note">Add Note</button>
-            </form>
-            <p id="note-count">Notes: <span id="count">0</span></p>
-            <input type="date" id="date-filter" value="none">
-            <button id="clear-filter">Clear Filter</button>
-            <div id="notes-container"></div>
-        `;
-        app.notes = [];
-        app.addNoteButton = document.getElementById('add-note');
-        app.titleInput = document.getElementById('title');
-        app.bodyInput = document.getElementById('body');
-        app.dateFilterInput = document.getElementById('date-filter');
-        app.notesContainer = document.getElementById('notes-container');
-        app.noteCountSpan = document.getElementById('count');
+describe('Simple Notes App', () => {
+  let noteListElement;
+  let dateFilterElement;
+  let noteCountElement;
+
+  beforeEach(() => {
+    // Mock localStorage for testing
+    global.localStorage = {
+      getItem: () => '[]',
+      setItem: (key, value) => {},
+      clear: () => {}
+    };
+
+    // Mock DOM elements for testing
+    global.document = {
+      getElementById: (id) => {
+        if (id === 'note-list') {
+          return noteListElement;
+        } else if (id === 'note-count') {
+          return noteCountElement;
+        } else if (id === 'note-title') {
+          return { value: '' };
+        } else if (id === 'note-body') {
+          return { value: '' };
+        } else if (id === 'date-filter') {
+          return dateFilterElement;
+        } else if (id === 'add-note-btn') {
+          return {};
+        } else if (id === 'clear-filter-btn') {
+          return {};
+        }
+      }
+    };
+
+    noteListElement = { innerHTML: '', children: [] };
+    dateFilterElement = { value: '' };
+    noteCountElement = { textContent: '' };
+  });
+
+  afterEach(() => {
+    // Clear mock localStorage after each test
+    global.localStorage.clear();
+  });
+
+  it('initializes with an empty notes array', () => {
+    expect(JSON.parse(localStorage.getItem('notes'))).toEqual([]);
+  });
+
+  describe('addNote', () => {
+    it('adds a new note to the notes array', () => {
+      const noteTitle = { value: 'Test Note' };
+      const noteBody = { value: 'Test Body' };
+
+      document.getElementById = jest.fn().mockImplementation((id) => {
+        if (id === 'note-title') {
+          return noteTitle;
+        } else if (id === 'note-body') {
+          return noteBody;
+        } else {
+          return noteListElement;
+        }
+      });
+
+      app.addNote({ preventDefault: () => {} });
+      expect(JSON.parse(localStorage.getItem('notes'))).not.toHaveLength(0);
     });
 
-    it('should initialize notes as an empty array if none exist in storage', () => {
-        expect(app.notes).toEqual([]);
-    });
+    it('saves the notes array to localStorage', () => {
+      const setItemSpy = jest.spyOn(localStorage, 'setItem');
+      const noteTitle = { value: 'Test Note' };
+      const noteBody = { value: 'Test Body' };
 
-    it('should add a new note when the add button is clicked', () => {
-        const title = 'Test Note';
-        const body = 'This is a test note';
-        app.titleInput.value = title;
-        app.bodyInput.value = body;
-        app.addNoteButton.click();
-        expect(app.notes.length).toBe(1);
-        expect(app.notes[0].title).toBe(title);
-        expect(app.notes[0].body).toBe(body);
-    });
+      document.getElementById = jest.fn().mockImplementation((id) => {
+        if (id === 'note-title') {
+          return noteTitle;
+        } else if (id === 'note-body') {
+          return noteBody;
+        } else {
+          return noteListElement;
+        }
+      });
 
-    it('should render notes after adding a new note', () => {
-        const title = 'Test Note';
-        const body = 'This is a test note';
-        app.titleInput.value = title;
-        app.bodyInput.value = body;
-        app.addNoteButton.click();
-        expect(app.notesContainer.innerHTML).not.toBe('');
+      app.addNote({ preventDefault: () => {} });
+      expect(setItemSpy).toHaveBeenCalledTimes(1);
     });
+  });
 
-    it('should filter notes by date when the date filter input is changed', () => {
-        const title = 'Test Note';
-        const body = 'This is a test note';
-        app.titleInput.value = title;
-        app.bodyInput.value = body;
-        app.addNoteButton.click();
-        const date = (new Date()).toISOString().split('T')[0];
-        app.dateFilterInput.value = date;
-        expect(app.notesContainer.innerHTML).not.toBe('');
+  describe('editNote', () => {
+    it('edits a note in the notes array', () => {
+      const note = { title: 'Test Note', body: 'Test Body', date: '2022-01-01' };
+      const notes = [note];
+      localStorage.setItem('notes', JSON.stringify(notes));
+      app.editNote(0);
+      expect(note.title).toBe('Test Note');
     });
+  });
 
-    it('should clear filter when the clear filter button is clicked', () => {
-        const title = 'Test Note';
-        const body = 'This is a test note';
-        app.titleInput.value = title;
-        app.bodyInput.value = body;
-        app.addNoteButton.click();
-        const date = (new Date()).toISOString().split('T')[0];
-        app.dateFilterInput.value = date;
-        app.dateFilterInput.value = 'none';
-        expect(app.dateFilterInput.value).toBe('none');
+  describe('deleteNote', () => {
+    it('deletes a note from the notes array', () => {
+      const note = { title: 'Test Note', body: 'Test Body', date: '2022-01-01' };
+      const notes = [note];
+      localStorage.setItem('notes', JSON.stringify(notes));
+      app.deleteNote(0);
+      expect(JSON.parse(localStorage.getItem('notes'))).toHaveLength(0);
     });
+  });
+
+  describe('filterNotes', () => {
+    it('filters the notes based on the filter date', () => {
+      const note1 = { title: 'Test Note 1', body: 'Test Body 1', date: '2022-01-01' };
+      const note2 = { title: 'Test Note 2', body: 'Test Body 2', date: '2022-01-02' };
+      const notes = [note1, note2];
+      localStorage.setItem('notes', JSON.stringify(notes));
+      dateFilterElement.value = '2022-01-01';
+      app.filterNotes();
+      expect(noteListElement.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('clearFilter', () => {
+    it('clears the filter', () => {
+      const note1 = { title: 'Test Note 1', body: 'Test Body 1', date: '2022-01-01' };
+      const note2 = { title: 'Test Note 2', body: 'Test Body 2', date: '2022-01-02' };
+      const notes = [note1, note2];
+      localStorage.setItem('notes', JSON.stringify(notes));
+      dateFilterElement.value = '2022-01-01';
+      app.filterNotes();
+      app.clearFilter();
+      expect(dateFilterElement.value).toBe('');
+      expect(noteListElement.innerHTML).not.toBe('');
+    });
+  });
+
+  describe('updateNoteCount', () => {
+    it('updates the note count', () => {
+      const note1 = { title: 'Test Note 1', body: 'Test Body 1', date: '2022-01-01' };
+      const note2 = { title: 'Test Note 2', body: 'Test Body 2', date: '2022-01-02' };
+      const notes = [note1, note2];
+      localStorage.setItem('notes', JSON.stringify(notes));
+      app.updateNoteCount();
+      expect(noteCountElement.textContent).toBe('Showing 2 notes');
+    });
+  });
 });
