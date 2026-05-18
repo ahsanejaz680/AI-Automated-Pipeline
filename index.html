@@ -4,31 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Notes App</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        
+        .note {
+            margin-bottom: 20px;
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+        
+        .note-title {
+            font-weight: bold;
+        }
+        
+        .filter-date {
+            margin-bottom: 20px;
+        }
+        
+        #note-count {
+            float: right;
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <h1>Simple Notes App</h1>
-    </header>
-    <main>
-        <section class="filters">
-            <label for="date-filter">Filter by date:</label>
-            <input type="date" id="date-filter" onchange="filterNotes(this.value)">
-            <button onclick="clearFilter()">Clear filter</button>
-        </section>
-        <section class="notes">
-            <button id="add-note" onclick="addNote()">Add Note</button>
-            <div id="note-form" style="display: none;">
-                <input type="text" id="note-title">
-                <textarea id="note-body"></textarea>
-                <button onclick="saveNote()">Save Note</button>
-            </div>
-            <div id="note-list">
-                <!-- Notes will be appended here -->
-            </div>
-        </section>
-        <div id="note-count">Notes: 0</div>
-    </main>
+    <h1>Simple Notes App</h1>
+    <form id="add-note-form">
+        <input type="text" id="note-title" placeholder="Title">
+        <textarea id="note-body" placeholder="Body"></textarea>
+        <button id="add-note-btn">Add Note</button>
+    </form>
+    
+    <div id="note-list"></div>
+    <div class="filter-date">
+        <label for="date-filter">Filter by date:</label>
+        <input type="date" id="date-filter" value="">
+        <button id="clear-filter-btn">Clear filter</button>
+    </div>
+    
     <script src="app.js"></script>
 </body>
 </html>

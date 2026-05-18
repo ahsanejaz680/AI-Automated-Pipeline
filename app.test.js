@@ -1,133 +1,154 @@
+const jest = require('jest');
+const path = require('path');
+const fs = require('fs');
 const { JSDOM } = require('jsdom');
-const { document } = new JSDOM().window;
-const { jest } = require('jest');
 
-// Mock window and document properties
-global.window = document.defaultView;
-global.document = document;
-global.navigator = {
-  userAgent: 'node-jsdom',
-};
+const dom = new JSDOM('<!doctype html><html><body><button id="add-note-btn"></button><form id="add-note-form"><input id="note-title" type="text"/><input id="note-body" type="text"/><button form="add-note-form" id="add-note-form-btn"></button></form><button id="clear-filter-btn"></button><button id="date-filter"></button><div id="note-list"></div><span id="note-count">0 notes</span></body></html>');
+global.document = dom.window.document;
+global.window = dom.window;
 
-// Import the app.js file
 const app = require('./app.js');
 
-// Mock DOM elements
-const elementMock = (element) => {
-  const elements = [];
-  document.addEventListener('DOMContentLoaded', () => {
-    elements.push(element);
-  });
-  return jest.spyOn(document, 'createElement').mockResolvedValue(element);
-};
-
-Object.defineProperty(global.document, 'getElementById', {
-  value: (id) => {
-    switch (id) {
-      case 'note-list':
-        return elementMock(document.createElement('div'));
-      case 'note-count':
-        return elementMock(document.createElement('div'));
-      case 'date-filter':
-        return elementMock(document.createElement('input'));
-      case 'note-form':
-        return elementMock(document.createElement('form'));
-      case 'note-title':
-        return elementMock(document.createElement('input'));
-      case 'note-body':
-        return elementMock(document.createElement('textarea'));
-      default:
-        return null;
-    }
-  },
-});
-
-describe('Simple Notes App', () => {
+describe('notes functionality', () => {
   beforeEach(() => {
-    // Mock localStorage
-    Object.defineProperty(global.window, 'localStorage', {
-      value: {
-        getItem: jest.fn().mockReset(),
-        setItem: jest.fn().mockReset(),
-      },
-    });
-
-    // Initialize the note list and count
-    const noteList = document.getElementById('note-list');
-    noteList.innerHTML = '';
-    document.getElementById('note-count').textContent = 'Notes: 0';
+    localStorage.clear();
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should initialize the note list', async () => {
-    const loadNotesMock = jest
-      .spyOn(app, 'loadNotes')
-      .mockResolvedValueOnce();
-    await app.loadNotes();
-    expect(loadNotesMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('should add a new note to the list', async () => {
-    const addNoteMock = jest.spyOn(app, 'addNote').mockResolvedValueOnce();
-    await app.addNote();
-    expect(addNoteMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('should save a new note to local storage', async () => {
-    const saveNoteMock = jest.spyOn(app, 'saveNote').mockResolvedValueOnce();
-    document.getElementById('note-title').value = 'Test title';
-    document.getElementById('note-body').value = 'Test body';
-    await app.saveNote();
-    expect(saveNoteMock).toHaveBeenCalledTimes(1);
-    expect(localStorage.getItem).toHaveBeenCalledTimes(2);
-  });
-
-  it('should load notes from local storage', async () => {
-    const storedNotes = [
-      { id: 0, title: 'Note title', body: 'Note body', date: '2022-01-01', edited: false },
+  it('should render notes', async () => {
+    const notes = [
+      { id: 0, title: 'Note 1', body: 'Body 1', date: new Date().toISOString().split('T')[0] },
+      { id: 1, title: 'Note 2', body: 'Body 2', date: new Date().toISOString().split('T')[0] },
     ];
-    localStorage.setItem(app.NOTES_KEY, JSON.stringify(storedNotes));
-    const loadNotesMock = jest.spyOn(app, 'loadNotes').mockResolvedValueOnce();
-    await app.loadNotes();
-    expect(loadNotesMock).toHaveBeenCalledTimes(1);
-    expect(document.getElementById('note-list').children.length).toBe(1);
-  });
 
-  it('should delete a note', async () => {
-    const storedNotes = [
-      { id: 0, title: 'Note title', body: 'Note body', date: '2022-01-01', edited: false },
-    ];
-    const saveMock = jest.spyOn(localStorage, 'setItem').mockResolvedValueOnce();
-    const deleteMock = jest.spyOn(app, 'deleteNote');
-    localStorage.setItem(app.NOTES_KEY, JSON.stringify(storedNotes));
-    document.getElementById('note-list').children[0].remove();
-    await app.deleteNote(0);
-    expect(deleteMock).toHaveBeenCalledTimes(1);
-    expect(saveMock).toHaveBeenCalledTimes(1);
-  });
+    localStorage.setItem('notes', JSON.stringify(notes));
 
-  it('should display the total number of notes', async () => {
-    const storedNotes = [
-      { id: 0, title: 'Note title', body: 'Note body', date: '2022-01-01', edited: false },
-    ];
-    const saveMock = jest.spyOn(localStorage, 'setItem').mockResolvedValueOnce();
-    localStorage.setItem(app.NOTES_KEY, JSON.stringify(storedNotes));
-    await app.loadNotes();
-    expect(document.getElementById('note-count').textContent).toBe('Notes: 1');
-  });
-});
+    const noteList = dom.window.document.getElementById('note-list');
+    const noteCountSpan = dom.window.document.getElementById('note-count');
+    noteCountSpan.textContent = '2 notes';
 
-// Helper function to get elements by class name
-const getElementsByClassName = (className) => {
-  const elements = [];
-  document.addEventListener('DOMContentLoaded', () => {
-    const elementChildren = document.querySelector(`.${className}`).children;
-    Array.prototype.forEach.call(elementChildren, (element) => {
-      elements.push(element);
+    const noteElements = document.querySelectorAll('.note');
+    expect(noteElements.length).toBe(2);
+
+    noteElements.forEach((note, index) => {
+      expect(note.querySelector('h2').textContent).toBe(`Note ${index}`);
+      expect(note.querySelector('p')).toHaveTextContent(notes[index].body);
+      expect(note.querySelector('p:last-child')).toHaveTextContent(`Created: ${notes[index].date}`);
     });
   });
-  return jest.spyOn(document, 'getElementsByClassName').mockResolvedValue(elements);
-};
+
+  it('should add note on form submission', async () => {
+    const notes = [
+      { id: 0, title: 'Note 1', body: 'Body 1', date: new Date().toISOString().split('T')[0] },
+    ];
+
+    localStorage.setItem('notes', JSON.stringify(notes));
+
+    const addNoteBtn = dom.window.document.getElementById('add-note-btn');
+    const noteTitleInput = dom.window.document.getElementById('note-title');
+    const noteBodyInput = dom.window.document.getElementById('note-body');
+    noteTitleInput.value = 'Note 2';
+    noteBodyInput.value = 'Body 2';
+    const form = dom.window.document.getElementById('add-note-form');
+
+    await addEventListenersToForm(form);
+    addNoteBtn.click();
+    await waitForDomUpdates();
+
+    const noteList = dom.window.document.getElementById('note-list');
+    const noteCountSpan = dom.window.document.getElementById('note-count');
+    expect(noteList.children.length).toBe(2);
+    expect(noteCountSpan.textContent).toBe('3 notes');
+
+    expect(noteList.children[1]).toMatchSnapshot();
+  });
+
+  it('should delete note after deleting button click', async () => {
+    const notes = [
+      { id: 0, title: 'Note 1', body: 'Body 1', date: new Date().toISOString().split('T')[0] },
+    ];
+
+    localStorage.setItem('notes', JSON.stringify(notes));
+
+    const addNoteBtn = dom.window.document.getElementById('add-note-btn');
+    const noteTitleInput = dom.window.document.getElementById('note-title');
+    const noteBodyInput = dom.window.document.getElementById('note-body');
+    noteTitleInput.value = 'Note 2';
+    noteBodyInput.value = 'Body 2';
+    const form = dom.window.document.getElementById('add-note-form');
+
+    await addEventListenersToForm(form);
+    addNoteBtn.click();
+    await waitForDomUpdates();
+
+    const secondNote = dom.window.document.querySelector('.note:nth-child(2)');
+    const deleteBtn = secondNote.querySelector('button:last-child');
+    deleteBtn.click();
+    await waitForDomUpdates();
+
+    expect(noteList.children.length).toBe(1);
+  });
+
+  it('should filter notes by date', async () => {
+    const notes = [
+      { id: 0, title: 'Note 1', body: 'Body 1', date: new Date('2024-01-01').toISOString().split('T')[0] },
+      { id: 1, title: 'Note 2', body: 'Body 2', date: new Date('2024-01-02').toISOString().split('T')[0] },
+      { id: 2, title: 'Note 3', body: 'Body 3', date: new Date('2024-01-03').toISOString().split('T')[0] },
+    ];
+
+    localStorage.setItem('notes', JSON.stringify(notes));
+
+    const clearFilterBtn = dom.window.document.getElementById('clear-filter-btn');
+    const dateFilterInput = dom.window.document.getElementById('date-filter');
+    const filterDate = '2024-01-02';
+
+    clearFilterBtn.click();
+    await waitForDomUpdates();
+    dateFilterInput.value = filterDate;
+
+    await addEventListenersToForm(dom.window.document.querySelector('#filter-note-form'));
+    dateFilterInput.dispatchEvent(new dom.window.Event('input'));
+
+    await waitForDomUpdates();
+
+    const filteredNoteList = dom.window.document.getElementById('note-list');
+    const noteCountSpan = dom.window.document.getElementById('note-count');
+    expect(filteredNoteList.children).toHaveLength(1);
+    expect(noteCountSpan.textContent).toBe('1 note');
+  });
+
+  async function addEventListenersToForm(form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await handleFormSubmit(e);
+    });
+  }
+
+  async function handleFormSubmit(e) {
+    const form = e.target;
+    const noteTitle = form.elements.note_title.value;
+    const noteBody = form.elements.note_body.value;
+
+    localStorage.setItem('notes', JSON.stringify([
+      ...JSON.parse(localStorage.getItem('notes')),
+      { id: JSON.parse(localStorage.getItem('notes')).length, title: noteTitle, body: noteBody, date: new Date().toISOString().split('T')[0] },
+    ]));
+
+    await renderNoteList();
+  }
+
+  async function waitForDomUpdates() {
+    await new Promise((res) => {
+      setTimeout(() => {
+        res();
+      }, 0);
+    });
+  }
+
+  async function renderNoteList() {
+    // render the note list here
+}
